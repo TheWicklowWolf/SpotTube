@@ -3,6 +3,6 @@ gevent
 gevent-websocket
 flask
 flask_socketio
-google
+ytmusicapi
 requests
 spotipy

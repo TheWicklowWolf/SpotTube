@@ -2,7 +2,8 @@ import logging
 import os
 import sys
 import threading
-import googlesearch
+import re
+from ytmusicapi import YTMusic
 import requests
 from flask import Flask, render_template
 from flask_socketio import SocketIO
@@ -15,8 +16,9 @@ class Data_Handler:
         self.full_metube_address = metube_address + "/add"
         self.spotify_client_id = spotify_client_id
         self.spotify_client_secret = spotify_client_secret
-        self.youtube_search_suffix = "YouTube Music"
-        self.metube_sleep_interval = 10
+        self.youtube_search_suffix = ""
+        self.metube_sleep_interval = 15
+        self.ytmusic = YTMusic()
         self.reset()
 
     def reset(self):
@@ -27,6 +29,7 @@ class Data_Handler:
         self.status = "Idle"
         self.index = 0
         self.percent_completion = 0
+        self.running_flag = False
 
     def spotify_extractor(self, link):
         sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=self.spotify_client_id, client_secret=self.spotify_client_secret))
@@ -73,12 +76,22 @@ class Data_Handler:
 
     def add_items(self):
         try:
+            self.running_flag = True
             while not self.stop_metube_event.is_set() and self.index < len(self.metube_items):
                 artist = self.metube_items[self.index]["Artist"]
                 title = self.metube_items[self.index]["Title"]
                 folder = self.metube_items[self.index]["Folder"]
-                search_results = googlesearch.search(artist + " " + title + " " + self.youtube_search_suffix, stop=10)
-                first_result = next((x for x in search_results if "playlist" not in x and "/user/" not in x and "@" not in x), None)
+                search_results = self.ytmusic.search(query=artist + " " + title + " " + self.youtube_search_suffix, filter="songs", limit=20)
+                first_result = None
+                cleaned_title = re.sub(r"[^\w\s]", "", title).lower()
+                cleaned_title = re.sub(r"\s{2,}", " ", cleaned_title)
+                for item in search_results:
+                    cleaned_youtube_title = re.sub(r"[^\w\s]", "", item["title"]).lower()
+                    cleaned_youtube_title = re.sub(r"\s{2,}", " ", cleaned_youtube_title)
+                    if cleaned_title in cleaned_youtube_title:
+                        first_result = "https://www.youtube.com/watch?v=" + item["videoId"]
+                        break
+
                 if first_result:
                     self.metube_items[self.index]["Status"] = "Link Found"
                     ret = self.add_to_metube(first_result, folder)
@@ -104,6 +117,7 @@ class Data_Handler:
                     break
                 logger.info("Sleeping Complete")
 
+            self.running_flag = False
             if not self.stop_metube_event.is_set():
                 self.status = "Complete"
 
@@ -116,6 +130,7 @@ class Data_Handler:
         except Exception as e:
             logger.error(str(e))
             self.status = "Stopped"
+            self.running_flag = False
 
     def add_to_metube(self, link, folder):
         try:
@@ -225,13 +240,13 @@ def disconnect():
 
 @socketio.on("clear")
 def clear():
-    logger.info("Clearing List")
+    logger.info("Clear List Request")
     data_handler.stop_metube_event.set()
     data_handler.percent_completion = 0
-
-    custom_data = {"Data": [], "Status": data_handler.status, "Percent_Completion": data_handler.percent_completion}
+    custom_data = {"Data": data_handler.metube_items, "Status": data_handler.status, "Percent_Completion": data_handler.percent_completion}
     socketio.emit("progress_status", custom_data)
-    logger.info("List Cleared")
+    if data_handler.running_flag == False:
+        data_handler.metube_items = []
 
 
 if __name__ == "__main__":
