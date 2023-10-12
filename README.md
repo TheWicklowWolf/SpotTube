@@ -15,7 +15,7 @@ Web GUI for adding Spotify Playlists/Albums to metube.
 ```yaml
 version: "2.1"
 services:
-  huntorr:
+  spottube:
     image: thewicklowwolf/spottube:latest
     container_name: spottube
     environment:
