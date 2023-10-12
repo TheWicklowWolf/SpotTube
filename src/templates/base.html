@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/x-icon" href="{{url_for('static', filename='logo.png')}}">
+  <link rel="stylesheet" href="{{url_for('static', filename='style.css')}}">
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+  <!-- Bootstrap JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.min.js"></script>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <!-- Socket IO -->
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <title>SpotTube</title>
+</head>
+
+<body class="bg-secondary-subtle">
+  <div class="container-fluid bg-dark">
+    <div class="top-bar d-flex justify-content-between align-items-center">
+      <img id="logo" src="{{url_for('static',filename='spottube.png')}}">
+      <h1 class="title text-center text-light flex-grow-1">SpotTube</h1>
+      <button class="btn btn-link text-light" id="settings-button" data-bs-toggle="modal"
+        data-bs-target="#config-modal">
+        <i class="fa fa-gear fa-2x"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal fade" id="config-modal" tabindex="-1" role="dialog" aria-labelledby="modal-label"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modal-label">Configuration</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+
+        </div>
+        <div class="modal-body">
+          <div id="save-message" style="display: none;" class="alert alert-success mt-3">
+            Settings saved successfully.
+          </div>
+          <div class="form-group-modal">
+            <label for="spotify_client_id">Spotify Client ID:</label>
+            <input type="text" class="form-control" id="spotify_client_id" placeholder="Enter Spotify Client ID">
+          </div>
+          <div class="form-group-modal my-4">
+            <label for="spotify_client_secret">Spotify Client Secret:</label>
+            <input type="text" class="form-control" id="spotify_client_secret"
+              placeholder="Enter Spotify Client Secret">
+          </div>
+          <div class="form-group-modal my-4">
+            <label for="youtube_search_suffix">YouTube Search Suffix:</label>
+            <input type="text" class="form-control" id="youtube_search_suffix" placeholder="Enter YouTube Suffix">
+          </div>
+          <div class="form-group-modal">
+            <label for="metube_sleep_interval">Metube Sleep Interval (Seconds):</label>
+            <input type="number" class="form-control" id="metube_sleep_interval"
+              placeholder="Enter Metube Sleep Interval">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" id="save-changes-button" class="btn btn-primary">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container mt-5">
+    <div class="position-relative rounded-pill shadow-lg">
+      <div class="input-group">
+        <input id="search-box" type="text" class="form-control rounded-pill z-0" placeholder="Enter Spotify Link">
+        <div class="input-group-append position-absolute top-0 end-0">
+          <button class="btn btn-warning left-pill rounded-start-pill" type="button" id="clear-button">Clear
+            List</button>
+          <button class="btn btn-primary rounded-end-pill" type="button" id="download-button">Download</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container mt-4">
+    <h2 class="text-center me-2 mb-2">Import List</h2>
+    <div id="table-box" class="shadow-lg px-3 pb=3 mb-4 bg-white rounded">
+      <table id="progress-table" class="table table-hover">
+        <thead class="bg-primary-subtle sticky-top top-0">
+          <tr>
+            <th>Artist</th>
+            <th>Title</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container mb-3 fixed-bottom">
+      <div id="progress-status-bar" class="progress">
+        <div class="progress-bar-striped bg-primary" role="progressbar" aria-valuenow="0" aria-valuemin="0"
+          aria-valuemax="100"></div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="{{url_for('static',filename='script.js')}}"></script>
+
+</body>
+
+</html>
