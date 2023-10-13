@@ -81,7 +81,7 @@ class Data_Handler:
                 artist = self.metube_items[self.index]["Artist"]
                 title = self.metube_items[self.index]["Title"]
                 folder = self.metube_items[self.index]["Folder"]
-                search_results = self.ytmusic.search(query=artist + " " + title + " " + self.youtube_search_suffix, filter="songs", limit=20)
+                search_results = self.ytmusic.search(query=artist + " " + title + " " + self.youtube_search_suffix, filter="songs", limit=25)
                 first_result = None
                 cleaned_title = re.sub(r"[^\w\s]", "", title).lower()
                 cleaned_title = re.sub(r"\s{2,}", " ", cleaned_title)
@@ -106,6 +106,7 @@ class Data_Handler:
                         continue
                 else:
                     self.metube_items[self.index]["Status"] = "No Link Found"
+                    logger.info("No Link Found for: " + artist + " - " + title)
                     self.index += 1
                     self.percent_completion = 100 * (self.index / len(self.metube_items))
                     continue
