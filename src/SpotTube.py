@@ -81,7 +81,7 @@ class Data_Handler:
                 artist = self.metube_items[self.index]["Artist"]
                 title = self.metube_items[self.index]["Title"]
                 folder = self.metube_items[self.index]["Folder"]
-                search_results = self.ytmusic.search(query=artist + " " + title + " " + self.youtube_search_suffix, filter="songs", limit=25)
+                search_results = self.ytmusic.search(query=artist + " " + title + " " + self.youtube_search_suffix, filter="songs", limit=20)
                 first_result = None
                 cleaned_title = re.sub(r"[^\w\s]+", " ", title).lower()
                 cleaned_title = re.sub(r"\s{2,}", " ", cleaned_title)
@@ -91,6 +91,17 @@ class Data_Handler:
                     if cleaned_title in cleaned_youtube_title:
                         first_result = "https://www.youtube.com/watch?v=" + item["videoId"]
                         break
+                else:
+                    # Try again but reverse the check otherwise select top result
+                    if len(search_results):
+                        for item in search_results:
+                            cleaned_youtube_title = re.sub(r"[^\w\s]+", " ", item["title"]).lower()
+                            cleaned_youtube_title = re.sub(r"\s{2,}", " ", cleaned_youtube_title)
+                            if all(word in cleaned_title for word in cleaned_youtube_title.split()):
+                                first_result = "https://www.youtube.com/watch?v=" + item["videoId"]
+                                break
+                        else:
+                            first_result = "https://www.youtube.com/watch?v=" + search_results[0]["videoId"]
 
                 if first_result:
                     self.metube_items[self.index]["Status"] = "Link Found"
