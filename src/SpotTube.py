@@ -18,7 +18,6 @@ class Data_Handler:
         self.spotify_client_secret = spotify_client_secret
         self.youtube_search_suffix = ""
         self.metube_sleep_interval = 15
-        self.ytmusic = YTMusic()
         self.reset()
 
     def reset(self):
@@ -76,6 +75,7 @@ class Data_Handler:
 
     def add_items(self):
         try:
+            self.ytmusic = YTMusic()
             self.running_flag = True
             while not self.stop_metube_event.is_set() and self.index < len(self.metube_items):
                 artist = self.metube_items[self.index]["Artist"]
