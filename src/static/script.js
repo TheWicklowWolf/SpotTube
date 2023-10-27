@@ -101,3 +101,26 @@ socket.on("progress_status", (response) => {
     var actual_status = response.Status;
     updateProgressBar(percent_completion, actual_status);
 })
+
+const themeSwitch = document.getElementById('themeSwitch');
+const savedTheme = localStorage.getItem('theme');
+const savedSwitchPosition = localStorage.getItem('switchPosition');
+
+if (savedSwitchPosition) {
+    themeSwitch.checked = savedSwitchPosition === 'true';
+}
+
+if (savedTheme) {
+    document.documentElement.setAttribute('data-bs-theme', savedTheme);
+}
+
+themeSwitch.addEventListener('click', () => {
+    if (document.documentElement.getAttribute('data-bs-theme') === 'dark') {
+        document.documentElement.setAttribute('data-bs-theme', 'light');
+    } else {
+        document.documentElement.setAttribute('data-bs-theme', 'dark');
+    }
+    localStorage.setItem('theme', document.documentElement.getAttribute('data-bs-theme'));
+    localStorage.setItem('switchPosition', themeSwitch.checked);
+});
+
