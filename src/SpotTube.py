@@ -223,7 +223,7 @@ try:
 except:
     spotify_client_id = "abc"
     spotify_client_secret = "123"
-    thread_limit = 8
+    thread_limit = 1
 
 data_handler = Data_Handler(spotify_client_id, spotify_client_secret, thread_limit)
 
