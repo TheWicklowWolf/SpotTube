@@ -219,7 +219,7 @@ logger = logging.getLogger()
 try:
     spotify_client_id = os.environ["spotify_client_id"]
     spotify_client_secret = os.environ["spotify_client_secret"]
-    thread_limit = os.environ["thread_limit"]
+    thread_limit = int(os.environ["thread_limit"])
 except:
     spotify_client_id = "abc"
     spotify_client_secret = "123"
