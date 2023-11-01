@@ -111,7 +111,7 @@ class Data_Handler:
         else:
             if found_link:
                 song["Status"] = "Link Found"
-                file_name = os.path.join(self.string_cleaner(folder), self.string_cleaner(artist) + " - " + self.string_cleaner(title))
+                file_name = os.path.join(self.string_cleaner(folder), self.string_cleaner(title) + " - " + self.string_cleaner(artist))
                 full_file_path = os.path.join(self.download_folder, file_name)
 
                 if not os.path.exists(full_file_path + ".mp3"):
