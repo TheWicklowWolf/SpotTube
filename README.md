@@ -7,7 +7,7 @@
 
 </p>
 
-Web GUI for adding Spotify Playlists/Albums to metube.
+Web GUI for downloading Spotify Playlists/Albums.
 
 
 ## Run using docker-compose
@@ -21,7 +21,10 @@ services:
     environment:
       - spotify_client_id=abc
       - spotify_client_secret=123
-      - metube_address=http://192.168.1.2:8080
+      - thread_limit=1
+    volumes:
+      - /data/media/spottube:/spottube/downloads
+      - /etc/localtime:/etc/localtime:ro
     ports:
       - 5000:5000
     restart: unless-stopped

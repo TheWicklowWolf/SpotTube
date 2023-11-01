@@ -6,8 +6,7 @@ var save_message = document.getElementById("save-message");
 var save_changes_button = document.getElementById("save-changes-button");
 var spotify_client_id = document.getElementById("spotify_client_id");
 var spotify_client_secret = document.getElementById("spotify_client_secret");
-var youtube_search_suffix = document.getElementById("youtube_search_suffix");
-var metube_sleep_interval = document.getElementById("metube_sleep_interval");
+var sleep_interval = document.getElementById("sleep_interval");
 var progress_bar = document.getElementById('progress-status-bar');
 var progress_table = document.getElementById('progress-table').getElementsByTagName('tbody')[0];
 var socket = io();
@@ -40,7 +39,12 @@ function updateProgressBar(percentage, status) {
 
 download_button.addEventListener('click', function () {
     socket.emit("download", { "Link": search_box.value });
+});
 
+search_box.addEventListener('keydown', function (event) {
+    if (event.key === "Enter") {
+        socket.emit("download", { "Link": search_box.value });
+    }
 });
 
 socket.on("download", (response) => {
@@ -65,8 +69,7 @@ config_modal.addEventListener('show.bs.modal', function (event) {
     function handleSettingsLoaded(settings) {
         spotify_client_id.value = settings.spotify_client_id;
         spotify_client_secret.value = settings.spotify_client_secret;
-        metube_sleep_interval.value = settings.metube_sleep_interval;
-        youtube_search_suffix.value = settings.youtube_search_suffix;
+        sleep_interval.value = settings.sleep_interval;
         socket.off("settingsLoaded", handleSettingsLoaded);
     }
     socket.on("settingsLoaded", handleSettingsLoaded);
@@ -76,8 +79,7 @@ save_changes_button.addEventListener("click", () => {
     socket.emit("updateSettings", {
         "spotify_client_id": spotify_client_id.value,
         "spotify_client_secret": spotify_client_secret.value,
-        "metube_sleep_interval": metube_sleep_interval.value,
-        "youtube_search_suffix": youtube_search_suffix.value
+        "sleep_interval": sleep_interval.value,
     });
     save_message.style.display = "block";
     setTimeout(function () {
