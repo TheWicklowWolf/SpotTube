@@ -203,7 +203,7 @@ class Data_Handler:
             self.percent_completion = 100 * (self.index / len(self.download_list)) if self.download_list else 0
             custom_data = {"Data": self.download_list, "Status": self.status, "Percent_Completion": self.percent_completion}
             socketio.emit("progress_status", custom_data)
-            socketio.sleep(1)
+            self.stop_monitoring_event.wait(1)
 
     def string_cleaner(self, input_string):
         raw_string = re.sub(r'[\/:*?"<>|]', " ", input_string)
@@ -243,6 +243,7 @@ def download(data):
         if data_handler.monitor_active_flag == False:
             data_handler.stop_monitoring_event.clear()
             thread = threading.Thread(target=data_handler.monitor)
+            thread.daemon = True
             thread.start()
             data_handler.monitor_active_flag = True
 
@@ -255,6 +256,7 @@ def download(data):
             data_handler.index = 0
             data_handler.status = "Running"
             thread = threading.Thread(target=data_handler.master_queue)
+            thread.daemon = True
             thread.start()
 
         ret = {"Status": "Success"}
@@ -272,6 +274,7 @@ def connection():
     if data_handler.monitor_active_flag == False:
         data_handler.stop_monitoring_event.clear()
         thread = threading.Thread(target=data_handler.monitor)
+        thread.daemon = True
         thread.start()
         data_handler.monitor_active_flag = True
 

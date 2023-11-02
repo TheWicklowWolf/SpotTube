@@ -102,7 +102,7 @@ socket.on("progress_status", (response) => {
     var percent_completion = response.Percent_Completion;
     var actual_status = response.Status;
     updateProgressBar(percent_completion, actual_status);
-})
+});
 
 const themeSwitch = document.getElementById('themeSwitch');
 const savedTheme = localStorage.getItem('theme');
