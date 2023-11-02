@@ -161,6 +161,7 @@ class Data_Handler:
         try:
             self.running_flag = True
             while not self.stop_downloading_event.is_set() and self.index < len(self.download_list):
+                self.status = "Running"
                 with concurrent.futures.ThreadPoolExecutor(max_workers=self.thread_limit) as executor:
                     self.futures = []
                     start_position = self.index
@@ -189,6 +190,8 @@ class Data_Handler:
             self.running_flag = False
 
     def progress_callback(self, d):
+        if self.stop_downloading_event.is_set():
+            raise Exception("Cancelled")
         if d["status"] == "finished":
             logger.warning("Download complete")
 
