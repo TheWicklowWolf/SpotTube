@@ -13,7 +13,7 @@ RUN mkdir -p /spottube/downloads
 RUN chown -R $UID:$GID /spottube
 RUN chmod -R 777 /spottube/downloads
 # Install requirements and run code as general_user
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 5000
 USER general_user
 CMD ["gunicorn","src.SpotTube:app", "-c", "gunicorn_config.py"]
