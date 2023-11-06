@@ -38,7 +38,15 @@ class Data_Handler:
         sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=self.spotify_client_id, client_secret=self.spotify_client_secret))
         track_list = []
 
-        if "album" in link:
+        if "track" in link:
+            track_info = sp.track(link)
+            album_name = track_info["album"]["name"]
+            track_title = track_info["name"]
+            artists = [artist["name"] for artist in track_info["artists"]]
+            artists_str = ", ".join(artists)
+            track_list.append({"Artist": artists_str, "Title": track_title, "Status": "Queued", "Folder": ""})
+
+        elif "album" in link:
             album_info = sp.album(link)
             album_name = album_info["name"]
             album = sp.album_tracks(link)
