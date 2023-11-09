@@ -32,11 +32,16 @@ services:
 
 ---
 
-<p align="center">
 
 ![image](https://github.com/TheWicklowWolf/SpotTube/assets/111055425/6a52236b-330f-4761-97c0-3a526c22604f)
 
-</p>
 
+---
+
+
+![SpotTubeDark](https://github.com/TheWicklowWolf/SpotTube/assets/111055425/5e4f0ed2-07e5-4915-bfb8-56e2e4a06b02)
+
+
+---
 
 https://hub.docker.com/r/thewicklowwolf/spottube
