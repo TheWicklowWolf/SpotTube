@@ -129,7 +129,7 @@ class Data_Handler:
                             "format": "251/best",
                             "outtmpl": full_file_path,
                             "quiet": False,
-                            "progress_hooks": [self.progress_callback],
+                            "progress_hooks": [lambda d: self.progress_callback(d, song)],
                             "sleep_interval": self.sleep_interval,
                             "writethumbnail": True,
                             "postprocessors": [
@@ -149,7 +149,7 @@ class Data_Handler:
                         yt_downloader = yt_dlp.YoutubeDL(ydl_opts)
                         yt_downloader.download([found_link])
                         logger.warning("yt_dl Complete : " + found_link)
-                        song["Status"] = "Download Complete"
+                        song["Status"] = "Processing Complete"
 
                     except Exception as e:
                         logger.error(f"Error downloading song: {found_link}. Error message: {e}")
@@ -197,7 +197,7 @@ class Data_Handler:
             logger.warning("Stopped")
             self.running_flag = False
 
-    def progress_callback(self, d):
+    def progress_callback(self, d, song):
         if self.stop_downloading_event.is_set():
             raise Exception("Cancelled")
         if d["status"] == "finished":
@@ -205,6 +205,9 @@ class Data_Handler:
 
         elif d["status"] == "downloading":
             logger.warning(f'Downloaded {d["_percent_str"]} of {d["_total_bytes_str"]} at {d["_speed_str"]}')
+            percent_str = d["_percent_str"].replace("%", "").strip()
+            percent_complete = int(float(percent_str)) if percent_str else 0
+            song["Status"] = f"{percent_complete}% Downloaded"
 
     def monitor(self):
         while not self.stop_monitoring_event.is_set():
@@ -227,14 +230,9 @@ socketio = SocketIO(app)
 logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(message)s", datefmt="%d/%m/%Y %H:%M:%S", handlers=[logging.StreamHandler(sys.stdout)])
 logger = logging.getLogger()
 
-try:
-    spotify_client_id = os.environ["spotify_client_id"]
-    spotify_client_secret = os.environ["spotify_client_secret"]
-    thread_limit = int(os.environ["thread_limit"])
-except:
-    spotify_client_id = "abc"
-    spotify_client_secret = "123"
-    thread_limit = 1
+spotify_client_id = os.environ.get("spotify_client_id", "abc")
+spotify_client_secret = os.environ.get("spotify_client_secret", "123")
+thread_limit = int(os.environ.get("thread_limit", "1"))
 
 data_handler = Data_Handler(spotify_client_id, spotify_client_secret, thread_limit)
 
