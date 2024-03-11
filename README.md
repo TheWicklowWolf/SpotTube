@@ -1,11 +1,9 @@
 ![Build Status](https://github.com/TheWicklowWolf/SpotTube/actions/workflows/main.yml/badge.svg)
 ![Docker Pulls](https://img.shields.io/docker/pulls/thewicklowwolf/spottube.svg)
 
-<p align="center">
 
 ![spottube](https://github.com/TheWicklowWolf/SpotTube/assets/111055425/a99d7c70-c37c-4d65-b25d-04bf3bfdd37a)
 
-</p>
 
 Web GUI for downloading Spotify Playlists/Albums.
 
