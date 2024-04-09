@@ -13,15 +13,23 @@ import concurrent.futures
 from thefuzz import fuzz
 
 
-class Data_Handler:
-    def __init__(self, spotify_client_id, spotify_client_secret, thread_limit):
-        self.spotify_client_id = spotify_client_id
-        self.spotify_client_secret = spotify_client_secret
+class DataHandler:
+    def __init__(self):
+        logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(message)s", datefmt="%d/%m/%Y %H:%M:%S", handlers=[logging.StreamHandler(sys.stdout)])
+        self.logger = logging.getLogger()
+
+        self.spotify_client_id = os.environ.get("spotify_client_id", "abc")
+        self.spotify_client_secret = os.environ.get("spotify_client_secret", "123")
+        self.thread_limit = int(os.environ.get("thread_limit", "1"))
         self.sleep_interval = 0
-        self.thread_limit = thread_limit
         self.download_folder = "downloads"
+        self.config_folder = "config"
         if not os.path.exists(self.download_folder):
             os.makedirs(self.download_folder)
+        if not os.path.exists(self.config_folder):
+            os.makedirs(self.config_folder)
+        full_cookies_path = os.path.join(self.config_folder, "cookies.txt")
+        self.cookies_path = full_cookies_path if os.path.exists(full_cookies_path) else None
         self.reset()
 
     def reset(self):
@@ -130,7 +138,7 @@ class Data_Handler:
                             found_link = "https://www.youtube.com/watch?v=" + top_search_results[0]["videoId"]
 
         except Exception as e:
-            logger.error(f"Error downloading song: {title}. Error message: {e}")
+            self.logger.error(f"Error downloading song: {title}. Error message: {e}")
             song["Status"] = "Search Failed"
 
         else:
@@ -163,21 +171,23 @@ class Data_Handler:
                                 },
                             ],
                         }
+                        if self.cookies_path:
+                            ydl_opts["cookiefile"] = self.cookies_path
                         yt_downloader = yt_dlp.YoutubeDL(ydl_opts)
                         yt_downloader.download([found_link])
-                        logger.warning("yt_dl Complete : " + found_link)
+                        self.logger.warning("yt_dl Complete : " + found_link)
                         song["Status"] = "Processing Complete"
 
                     except Exception as e:
-                        logger.error(f"Error downloading song: {found_link}. Error message: {e}")
+                        self.logger.error(f"Error downloading song: {found_link}. Error message: {e}")
                         song["Status"] = "Download Failed"
 
                 else:
                     song["Status"] = "File Already Exists"
-                    logger.warning("File Already Exists: " + artist + " " + title)
+                    self.logger.warning("File Already Exists: " + artist + " " + title)
             else:
                 song["Status"] = "No Link Found"
-                logger.warning("No Link Found for: " + artist + " " + title)
+                self.logger.warning("No Link Found for: " + artist + " " + title)
 
         finally:
             self.index += 1
@@ -193,35 +203,35 @@ class Data_Handler:
                     for song in self.download_list[start_position:]:
                         if self.stop_downloading_event.is_set():
                             break
-                        logger.warning("Searching for Song: " + song["Title"] + " - " + song["Artist"])
+                        self.logger.warning("Searching for Song: " + song["Title"] + " - " + song["Artist"])
                         self.futures.append(executor.submit(self.find_youtube_link_and_download, song))
                     concurrent.futures.wait(self.futures)
 
             self.running_flag = False
             if not self.stop_downloading_event.is_set():
                 self.status = "Complete"
-                logger.warning("Finished")
+                self.logger.warning("Finished")
 
             else:
                 self.status = "Stopped"
-                logger.warning("Stopped")
+                self.logger.warning("Stopped")
                 self.download_list = []
                 self.percent_completion = 0
 
         except Exception as e:
-            logger.error(str(e))
+            self.logger.error(str(e))
             self.status = "Stopped"
-            logger.warning("Stopped")
+            self.logger.warning("Stopped")
             self.running_flag = False
 
     def progress_callback(self, d, song):
         if self.stop_downloading_event.is_set():
             raise Exception("Cancelled")
         if d["status"] == "finished":
-            logger.warning("Download complete")
+            self.logger.warning("Download complete")
 
         elif d["status"] == "downloading":
-            logger.warning(f'Downloaded {d["_percent_str"]} of {d["_total_bytes_str"]} at {d["_speed_str"]}')
+            self.logger.warning(f'Downloaded {d["_percent_str"]} of {d["_total_bytes_str"]} at {d["_speed_str"]}')
             percent_str = d["_percent_str"].replace("%", "").strip()
             percent_complete = int(float(percent_str)) if percent_str else 0
             song["Status"] = f"{percent_complete}% Downloaded"
@@ -244,14 +254,7 @@ app = Flask(__name__)
 app.secret_key = "secret_key"
 socketio = SocketIO(app)
 
-logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(message)s", datefmt="%d/%m/%Y %H:%M:%S", handlers=[logging.StreamHandler(sys.stdout)])
-logger = logging.getLogger()
-
-spotify_client_id = os.environ.get("spotify_client_id", "abc")
-spotify_client_secret = os.environ.get("spotify_client_secret", "123")
-thread_limit = int(os.environ.get("thread_limit", "1"))
-
-data_handler = Data_Handler(spotify_client_id, spotify_client_secret, thread_limit)
+data_handler = DataHandler()
 
 
 @app.route("/")
@@ -285,7 +288,7 @@ def download(data):
         ret = {"Status": "Success"}
 
     except Exception as e:
-        logger.error(str(e))
+        data_handler.logger.error(str(e))
         ret = {"Status": "Error", "Data": str(e)}
 
     finally:
@@ -327,7 +330,7 @@ def disconnect():
 
 @socketio.on("clear")
 def clear():
-    logger.warning("Clear List Request")
+    data_handler.logger.warning("Clear List Request")
     data_handler.stop_downloading_event.set()
     for future in data_handler.futures:
         if not future.done():
