@@ -11,7 +11,6 @@ Web GUI for downloading Spotify Playlists/Albums.
 ## Run using docker-compose
 
 ```yaml
-version: "2.1"
 services:
   spottube:
     image: thewicklowwolf/spottube:latest
@@ -21,6 +20,7 @@ services:
       - spotify_client_secret=123
       - thread_limit=1
     volumes:
+      - /path/to/config:/spottube/config
       - /data/media/spottube:/spottube/downloads
       - /etc/localtime:/etc/localtime:ro
     ports:
