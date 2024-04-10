@@ -28,6 +28,15 @@ services:
     restart: unless-stopped
 ```
 
+
+## Cookies (optional)
+To utilize a cookies file with yt-dlp, follow these steps:
+
+* Generate Cookies File: Open your web browser and use a suitable extension (e.g. cookies.txt for Firefox) to extract cookies for a user on YT.
+
+* Save Cookies File: Save the obtained cookies into a file named `cookies.txt` and put it into the config folder.
+
+
 ---
 
 
