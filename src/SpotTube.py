@@ -155,7 +155,6 @@ class DataHandler:
                             "outtmpl": full_file_path,
                             "quiet": False,
                             "progress_hooks": [lambda d: self.progress_callback(d, song)],
-                            "sleep_interval": self.sleep_interval,
                             "writethumbnail": True,
                             "postprocessors": [
                                 {
@@ -177,6 +176,8 @@ class DataHandler:
                         yt_downloader.download([found_link])
                         self.logger.warning("yt_dl Complete : " + found_link)
                         song["Status"] = "Processing Complete"
+
+                        self.stop_downloading_event.wait(self.sleep_interval)
 
                     except Exception as e:
                         self.logger.error(f"Error downloading song: {found_link}. Error message: {e}")
