@@ -5,7 +5,7 @@
 ![spottube](https://github.com/TheWicklowWolf/SpotTube/assets/111055425/a99d7c70-c37c-4d65-b25d-04bf3bfdd37a)
 
 
-Web GUI for downloading Spotify Playlists/Albums.
+SpotTube is a tool for downloading Spotify Playlists/Albums via yt-dlp.
 
 
 ## Run using docker-compose
