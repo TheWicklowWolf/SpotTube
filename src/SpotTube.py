@@ -18,6 +18,12 @@ class DataHandler:
         logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(message)s", datefmt="%d/%m/%Y %H:%M:%S", handlers=[logging.StreamHandler(sys.stdout)])
         self.logger = logging.getLogger()
 
+        app_name_text = os.path.basename(__file__).replace(".py", "")
+        release_version = os.environ.get("RELEASE_VERSION", "unknown")
+        self.logger.warning(f"{'*' * 50}\n")
+        self.logger.warning(f"{app_name_text} Version: {release_version}\n")
+        self.logger.warning(f"{'*' * 50}")
+
         self.spotify_client_id = os.environ.get("spotify_client_id", "abc")
         self.spotify_client_secret = os.environ.get("spotify_client_secret", "123")
         self.thread_limit = int(os.environ.get("thread_limit", "1"))
