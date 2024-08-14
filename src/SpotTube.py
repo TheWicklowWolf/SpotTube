@@ -156,6 +156,7 @@ class DataHandler:
                 if not os.path.exists(full_file_path + ".mp3"):
                     try:
                         ydl_opts = {
+                            "logger": self.logger,
                             "ffmpeg_location": "/usr/bin/ffmpeg",
                             "format": "251/best",
                             "outtmpl": full_file_path,
