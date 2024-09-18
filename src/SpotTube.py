@@ -71,14 +71,15 @@ class DataHandler:
                     artists = [artist["name"] for artist in item["artists"]]
                     artists_str = ", ".join(artists)
                     track_list.append({"Artist": artists_str, "Title": track_title, "Status": "Queued", "Folder": album_name})
-                except:
-                    pass
+
+                except Exception as e:
+                    self.logger.error(f"Error Parsing Item in Album: {str(item)} - {str(e)}")
 
         else:
             playlist = sp.playlist(link)
             playlist_name = playlist["name"]
             number_of_tracks = playlist["tracks"]["total"]
-            fields = "items.track(name,artists.name)"
+            fields = "items(track(name,artists(name)),added_at)"
 
             offset = 0
             limit = 100
@@ -88,15 +89,17 @@ class DataHandler:
                 all_items.extend(results["items"])
                 offset += limit
 
-            for item in all_items:
+            all_items_sorted = sorted(all_items, key=lambda x: x["added_at"], reverse=False)
+            for item in all_items_sorted:
                 try:
                     track = item["track"]
                     track_title = track["name"]
                     artists = [artist["name"] for artist in track["artists"]]
                     artists_str = ", ".join(artists)
                     track_list.append({"Artist": artists_str, "Title": track_title, "Status": "Queued", "Folder": playlist_name})
-                except:
-                    pass
+
+                except Exception as e:
+                    self.logger.error(f"Error Parsing Item in Playlist: {str(item)} - {str(e)}")
 
         return track_list
 
@@ -163,6 +166,7 @@ class DataHandler:
                             "quiet": False,
                             "progress_hooks": [lambda d: self.progress_callback(d, song)],
                             "writethumbnail": True,
+                            "updatetime": False,
                             "postprocessors": [
                                 {
                                     "key": "FFmpegExtractAudio",
