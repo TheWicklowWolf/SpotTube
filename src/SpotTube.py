@@ -53,13 +53,63 @@ class DataHandler:
         sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=self.spotify_client_id, client_secret=self.spotify_client_secret))
         track_list = []
 
-        if "track" in link:
+        if "artist" in link:
+            unique_tracks = set()
+            artist_albums = []
+            offset = 0
+            limit = 50
+
+            artist_info = sp.artist(link)
+            artist_name = artist_info.get("name", "Unknown Artist")
+
+            while True:
+                try:
+                    response = sp.artist_albums(link, include_groups="album,single", limit=limit, offset=offset)
+                    if response is None:
+                        break
+                    albums = response.get("items", [])
+                    artist_albums.extend(albums)
+                    if response.get("next") is None:
+                        break
+                    offset += limit
+
+                except Exception as e:
+                    self.logger.error(f"Error fetching artist's albums: {str(e)}")
+                    break
+
+            for album in artist_albums:
+                album_id = album["id"]
+                try:
+                    album_info = sp.album(album_id)
+                    album_name = album_info["name"]
+                    release_date = album_info["release_date"]
+
+                    album_tracks = sp.album_tracks(album_id)
+                    for item in album_tracks["items"]:
+                        track_title = item["name"]
+                        artists = [artist["name"] for artist in item["artists"]]
+                        artists_str = ", ".join(artists)
+                        track_info = {"Artist": artists_str, "Title": track_title, "Status": "Queued", "Folder": artist_name, "ReleaseDate": release_date}
+                        if (track_info["Artist"], track_info["Title"]) not in unique_tracks:
+                            unique_tracks.add((track_info["Artist"], track_info["Title"]))
+                            track_list.append(track_info)
+                        else:
+                            pass
+
+                except Exception as e:
+                    self.logger.error(f"Error parsing track from album {album['name']}: {str(e)}")
+
+            sorted_tracks = sorted(track_list, key=lambda x: x["ReleaseDate"])
+            return sorted_tracks
+
+        elif "track" in link:
             track_info = sp.track(link)
             album_name = track_info["album"]["name"]
             track_title = track_info["name"]
             artists = [artist["name"] for artist in track_info["artists"]]
             artists_str = ", ".join(artists)
             track_list.append({"Artist": artists_str, "Title": track_title, "Status": "Queued", "Folder": ""})
+            return track_list
 
         elif "album" in link:
             album_info = sp.album(link)
@@ -74,6 +124,8 @@ class DataHandler:
 
                 except Exception as e:
                     self.logger.error(f"Error Parsing Item in Album: {str(item)} - {str(e)}")
+
+            return track_list
 
         else:
             playlist = sp.playlist(link)
@@ -101,7 +153,7 @@ class DataHandler:
                 except Exception as e:
                     self.logger.error(f"Error Parsing Item in Playlist: {str(item)} - {str(e)}")
 
-        return track_list
+            return track_list
 
     def find_youtube_link_and_download(self, song):
         try:
@@ -231,7 +283,7 @@ class DataHandler:
                 self.percent_completion = 0
 
         except Exception as e:
-            self.logger.error(str(e))
+            self.logger.error(f"Error in Master Queue: {str(e)}")
             self.status = "Stopped"
             self.logger.warning("Stopped")
             self.running_flag = False
@@ -300,7 +352,7 @@ def download(data):
         ret = {"Status": "Success"}
 
     except Exception as e:
-        data_handler.logger.error(str(e))
+        data_handler.logger.error(f"Error Handling Download Request from UI {str(e)}")
         ret = {"Status": "Error", "Data": str(e)}
 
     finally:
