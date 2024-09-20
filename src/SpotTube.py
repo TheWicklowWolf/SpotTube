@@ -27,6 +27,7 @@ class DataHandler:
         self.spotify_client_id = os.environ.get("spotify_client_id", "abc")
         self.spotify_client_secret = os.environ.get("spotify_client_secret", "123")
         self.thread_limit = int(os.environ.get("thread_limit", "1"))
+        self.artist_track_selection = os.environ.get("artist_track_selection", "all")
         self.sleep_interval = 0
         self.download_folder = "downloads"
         self.config_folder = "config"
@@ -61,6 +62,25 @@ class DataHandler:
 
             artist_info = sp.artist(link)
             artist_name = artist_info.get("name", "Unknown Artist")
+
+            if self.artist_track_selection == "top":
+                try:
+                    top_tracks = sp.artist_top_tracks(link)
+                    for item in top_tracks["tracks"]:
+                        track_title = item["name"]
+                        artists = [artist["name"] for artist in item["artists"]]
+                        artists_str = ", ".join(artists)
+                        release_date = item.get("album", {}).get("release_date", "Unknown Date")
+                        track_info = {"Artist": artists_str, "Title": track_title, "Status": "Queued", "Folder": artist_name, "ReleaseDate": release_date}
+                        if (track_info["Artist"], track_info["Title"]) not in unique_tracks:
+                            unique_tracks.add((track_info["Artist"], track_info["Title"]))
+                            track_list.append(track_info)
+                    sorted_tracks = sorted(track_list, key=lambda x: x["ReleaseDate"])
+                    return sorted_tracks
+
+                except Exception as e:
+                    self.logger.error(f"Error fetching artist's top tracks: {str(e)}")
+                    return []
 
             while True:
                 try:
