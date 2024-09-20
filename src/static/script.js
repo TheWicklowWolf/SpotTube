@@ -1,4 +1,5 @@
 var download_button = document.getElementById('download-button');
+var download_spinner = document.getElementById('download-spinner');
 var clear_button = document.getElementById('clear-button');
 var search_box = document.getElementById('search-box');
 var config_modal = document.getElementById('config-modal');
@@ -39,11 +40,13 @@ function updateProgressBar(percentage, status) {
 
 download_button.addEventListener('click', function () {
     socket.emit("download", { "Link": search_box.value });
+    download_spinner.style.display = 'inline-block';
 });
 
 search_box.addEventListener('keydown', function (event) {
     if (event.key === "Enter") {
         socket.emit("download", { "Link": search_box.value });
+        download_spinner.style.display = 'inline-block';
     }
 });
 
@@ -55,8 +58,9 @@ socket.on("download", (response) => {
         search_box.value = response.Data;
         setTimeout(function () {
             search_box.value = "";
-        }, 2000);
+        }, 3000);
     }
+    download_spinner.style.display = 'none';
 });
 
 clear_button.addEventListener('click', function () {
