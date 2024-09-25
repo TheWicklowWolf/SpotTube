@@ -30,6 +30,14 @@ services:
 ```
 
 
+## Configuration via environment variables
+
+Certain values can be set via environment variables:
+
+* __thread_limit__: Max number of threads to use. Defaults to `1`.
+* __artist_track_selection__: Select which tracks to download for an artist, options are `all` or `top`. Defaults to `all`.
+
+
 ## Cookies (optional)
 To utilize a cookies file with yt-dlp, follow these steps:
 
