@@ -19,6 +19,7 @@ services:
       - spotify_client_id=abc
       - spotify_client_secret=123
       - thread_limit=1
+      - artist_track_selection=all
     volumes:
       - /path/to/config:/spottube/config
       - /data/media/spottube:/spottube/downloads
