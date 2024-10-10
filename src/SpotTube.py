@@ -317,7 +317,7 @@ class DataHandler:
         elif d["status"] == "downloading":
             self.logger.warning(f'Downloaded {d["_percent_str"]} of {d["_total_bytes_str"]} at {d["_speed_str"]}')
             percent_str = d["_percent_str"].replace("%", "").strip()
-            percent_complete = int(float(percent_str)) if percent_str else 0
+            percent_complete = percent_str if percent_str else 0
             song["Status"] = f"{percent_complete}% Downloaded"
 
     def monitor(self):
