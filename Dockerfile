@@ -6,7 +6,10 @@ ENV RELEASE_VERSION=${RELEASE_VERSION}
 
 # Create User
 ARG UID=1000
+ENV UID=${UID}
 ARG GID=1000
+ENV GID=${GID}
+
 RUN addgroup -g $GID general_user && \
     adduser -D -u $UID -G general_user -s /bin/sh general_user
 
