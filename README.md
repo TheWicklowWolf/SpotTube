@@ -20,6 +20,8 @@ services:
       - spotify_client_secret=123
       - thread_limit=1
       - artist_track_selection=all
+      - UID=1000
+      - GID=1000
     volumes:
       - /path/to/config:/spottube/config
       - /data/media/spottube:/spottube/downloads
