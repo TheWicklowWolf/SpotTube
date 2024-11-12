@@ -233,7 +233,7 @@ class DataHandler:
                         ydl_opts = {
                             "logger": self.logger,
                             "ffmpeg_location": "/usr/bin/ffmpeg",
-                            "cache_dir": "cache_folder",
+                            "cache_dir": "cache",
                             "format": "bestaudio",
                             "outtmpl": full_file_path,
                             "quiet": False,
