@@ -16,6 +16,8 @@ services:
     image: thewicklowwolf/spottube:latest
     container_name: spottube
     environment:
+      - PUID=1000
+      - PGID=1000
       - spotify_client_id=abc
       - spotify_client_secret=123
       - thread_limit=1

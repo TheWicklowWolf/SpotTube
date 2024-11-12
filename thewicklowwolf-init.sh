@@ -50,8 +50,8 @@ echo "-----------------"
 
 # Create the required directories with the correct permissions
 echo "Setting up directories.."
-mkdir -p /spottube/downloads /spottube/config
-chown -R ${PUID}:${PGID} /spottube/downloads /spottube/config
+mkdir -p /spottube/downloads /spottube/config /spottube/cache 
+chown -R ${PUID}:${PGID} /spottube/downloads /spottube/config /spottube/cache 
 
 # Start the application with the specified user permissions
 echo "Running SpotTube..."

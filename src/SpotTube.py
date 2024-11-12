@@ -31,10 +31,13 @@ class DataHandler:
         self.sleep_interval = 0
         self.download_folder = "downloads"
         self.config_folder = "config"
+        self.cache_folder = "cache"
         if not os.path.exists(self.download_folder):
             os.makedirs(self.download_folder)
         if not os.path.exists(self.config_folder):
             os.makedirs(self.config_folder)
+        if not os.path.exists(self.cache_folder):
+            os.makedirs(self.cache_folder)
         full_cookies_path = os.path.join(self.config_folder, "cookies.txt")
         self.cookies_path = full_cookies_path if os.path.exists(full_cookies_path) else None
         self.reset()
@@ -233,6 +236,7 @@ class DataHandler:
                         ydl_opts = {
                             "logger": self.logger,
                             "ffmpeg_location": "/usr/bin/ffmpeg",
+                            "cache_dir": self.cache_folder,
                             "format": "bestaudio",
                             "outtmpl": full_file_path,
                             "quiet": False,
