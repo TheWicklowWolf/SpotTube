@@ -52,7 +52,6 @@ echo "-----------------"
 echo "Setting up directories.."
 mkdir -p /spottube/downloads /spottube/config /spottube/cache
 chown -R ${PUID}:${PGID} /spottube
-chmod -R 775 /spottube
 
 # Set XDG_CACHE_HOME to use the cache directory
 export XDG_CACHE_HOME=/spottube/cache
