@@ -50,7 +50,7 @@ echo "-----------------"
 
 # Create the required directories with the correct permissions
 echo "Setting up directories.."
-mkdir -p /spottube/downloads /spottube/config spottube/cache
+mkdir -p /spottube/downloads /spottube/config /spottube/cache
 chown -R ${PUID}:${PGID} /spottube
 chmod -R 775 /spottube
 
