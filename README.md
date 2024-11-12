@@ -34,6 +34,8 @@ services:
 
 Certain values can be set via environment variables:
 
+* __PUID__: The user ID to run the app with. Defaults to `1000`. 
+* __PGID__: The group ID to run the app with. Defaults to `1000`.
 * __thread_limit__: Max number of threads to use. Defaults to `1`.
 * __artist_track_selection__: Select which tracks to download for an artist, options are `all` or `top`. Defaults to `all`.
 

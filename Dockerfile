@@ -4,24 +4,21 @@ FROM python:3.12-alpine
 ARG RELEASE_VERSION
 ENV RELEASE_VERSION=${RELEASE_VERSION}
 
-# Create User
-ARG UID=1000
-ARG GID=1000
-RUN addgroup -g $GID general_user && \
-    adduser -D -u $UID -G general_user -s /bin/sh general_user
-
 # Install ffmpeg
-RUN apk update && apk add --no-cache ffmpeg
+RUN apk update && apk add --no-cache ffmpeg su-exec
 
 # Create directories and set permissions
 COPY . /spottube
 WORKDIR /spottube
-RUN mkdir -p /spottube/downloads
-RUN chown -R $UID:$GID /spottube
-RUN chmod -R 777 /spottube/downloads
 
-# Install requirements and run code as general_user
+# Install requirements
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Make the script executable
+RUN chmod +x thewicklowwolf-init.sh
+
+# Expose port
 EXPOSE 5000
-USER general_user
-CMD ["gunicorn","src.SpotTube:app", "-c", "gunicorn_config.py"]
+
+# Start the app
+ENTRYPOINT ["./thewicklowwolf-init.sh"]
