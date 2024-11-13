@@ -1,16 +1,17 @@
-import logging
+import re
 import os
 import sys
+import logging
+import tempfile
 import threading
-import re
+import concurrent.futures
+import yt_dlp
+from thefuzz import fuzz
 from ytmusicapi import YTMusic
 from flask import Flask, render_template
 from flask_socketio import SocketIO
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
-import yt_dlp
-import concurrent.futures
-from thefuzz import fuzz
 
 
 class DataHandler:
@@ -226,15 +227,20 @@ class DataHandler:
             if found_link:
                 song["Status"] = "Link Found"
                 file_name = os.path.join(self.string_cleaner(folder), self.string_cleaner(title) + " - " + self.string_cleaner(artist))
-                full_file_path = os.path.join(self.download_folder, file_name)
+                full_file_path = os.path.join(self.download_folder, f"{file_name}.mp3")
 
-                if not os.path.exists(full_file_path + ".mp3"):
+                if os.path.exists(full_file_path):
+                    song["Status"] = "File Already Exists"
+                    self.logger.warning("File Already Exists: " + artist + " " + title)
+                else:
                     try:
+                        temp_dir = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
                         ydl_opts = {
                             "logger": self.logger,
                             "ffmpeg_location": "/usr/bin/ffmpeg",
                             "format": "bestaudio",
-                            "outtmpl": full_file_path,
+                            "outtmpl": f"{file_name}.%(ext)s",
+                            "paths": {"home": self.download_folder, "temp": temp_dir.name},
                             "quiet": False,
                             "progress_hooks": [lambda d: self.progress_callback(d, song)],
                             "writethumbnail": True,
@@ -266,9 +272,9 @@ class DataHandler:
                         self.logger.error(f"Error downloading song: {found_link}. Error message: {e}")
                         song["Status"] = "Download Failed"
 
-                else:
-                    song["Status"] = "File Already Exists"
-                    self.logger.warning("File Already Exists: " + artist + " " + title)
+                    finally:
+                        temp_dir.cleanup()
+
             else:
                 song["Status"] = "No Link Found"
                 self.logger.warning("No Link Found for: " + artist + " " + title)
