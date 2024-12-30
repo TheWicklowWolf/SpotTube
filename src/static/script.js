@@ -8,6 +8,7 @@ var save_changes_button = document.getElementById("save-changes-button");
 var spotify_client_id = document.getElementById("spotify_client_id");
 var spotify_client_secret = document.getElementById("spotify_client_secret");
 var playlist_url = document.getElementById("playlist_url");
+var webhook_url = document.getElementById("webhook_url");
 var update_frequency = document.getElementById("update_frequency");
 var sync_button = document.getElementById('sync-button');
 var sync_spinner = document.getElementById('sync-spinner');
@@ -108,6 +109,7 @@ config_modal.addEventListener('show.bs.modal', function (event) {
         sleep_interval.value = settings.sleep_interval;
         playlist_url.value = settings.playlist_url;
         update_frequency.value = settings.update_frequency;
+        webhook_url.value = settings.webhook_url;
         socket.off("settingsLoaded", handleSettingsLoaded);
     }
     socket.on("settingsLoaded", handleSettingsLoaded);
@@ -119,6 +121,7 @@ save_changes_button.addEventListener("click", () => {
         "spotify_client_secret": spotify_client_secret.value,
         "sleep_interval": sleep_interval.value,
         "playlist_url": playlist_url.value,
+        "webhook_url": webhook_url.value,
         "update_frequency": parseInt(update_frequency.value),
     });
     save_message.style.display = "block";

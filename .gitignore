@@ -4,4 +4,4 @@ __pycache__/
 /config/
 /venv/
 /.cache
-/src/.env
+/.env

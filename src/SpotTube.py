@@ -16,13 +16,14 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 import time
 from dotenv import load_dotenv
+import requests
 
 # Initialize the global scheduler
 scheduler = BackgroundScheduler()
 
 class DataHandler:
     def __init__(self):
-        logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s", datefmt="%d/%m/%Y %H:%M:%S", handlers=[logging.StreamHandler(sys.stdout)])
+        logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(message)s", datefmt="%d/%m/%Y %H:%M:%S", handlers=[logging.StreamHandler(sys.stdout)])
         self.logger = logging.getLogger()
         
         # Load environment variables from .env file
@@ -37,6 +38,7 @@ class DataHandler:
         self.spotify_client_id = os.environ.get("spotify_client_id", "abc")
         self.spotify_client_secret = os.environ.get("spotify_client_secret", "123")
         
+        self.webhook_url = os.environ.get("webhook_url", "")
         self.playlist_url = os.environ.get("playlist_url", "")
         self.update_frequency = int(os.environ.get("update_frequency", 0))
         
@@ -362,7 +364,7 @@ class DataHandler:
             self.logger.info("Scheduler stopped.")
         else:
             scheduler.remove_all_jobs()
-            scheduler.add_job(self.monitor_playlist, IntervalTrigger(minutes=int(self.update_frequency)))
+            scheduler.add_job(self.monitor_playlist, IntervalTrigger(hours=int(self.update_frequency)))
             if not scheduler.running:
                 scheduler.start()
             self.logger.info(f"Scheduler started with a new frequency of {self.update_frequency} hours.")
@@ -464,6 +466,7 @@ class DataHandler:
                     thread = threading.Thread(target=self.master_queue)
                     thread.daemon = True
                     thread.start()
+                self.call_webhook({"application":"SpotTube","status": "success", "message": f"Added {len(track_list)} missing tracks to the download queue."})
                 ret = {"Status": "Success", "Data": f"Added {len(track_list)} missing tracks to the download queue."}
             else:
                 self.logger.info("All tracks from the playlist are already downloaded.")
@@ -474,6 +477,19 @@ class DataHandler:
             ret = {"Status": "Error", "Data": str(e)}
         finally:
             return ret
+
+    def call_webhook(self, data):
+        if self.webhook_url and self.webhook_url.strip():
+            try:
+                response = requests.post(self.webhook_url, json=data)
+                if response.status_code == 200:
+                    self.logger.info("Webhook called successfully")
+                else:
+                    self.logger.error(f"Failed to call webhook. Status code: {response.status_code}")
+            except requests.exceptions.RequestException as e:
+                self.logger.error(f"Error calling webhook: {str(e)}")
+        else:
+            self.logger.info("Webhook URL is not set, skipping webhook call.")
 
 
 app = Flask(__name__)
@@ -544,6 +560,7 @@ def loadSettings():
         "sleep_interval": data_handler.sleep_interval,
         "playlist_url": data_handler.playlist_url,
         "update_frequency": data_handler.update_frequency,
+        "webhook_url": data_handler.webhook_url
     }
     socketio.emit("settingsLoaded", data)
 
@@ -554,6 +571,7 @@ def updateSettings(data):
     data_handler.spotify_client_secret = data["spotify_client_secret"]
     data_handler.sleep_interval = int(data["sleep_interval"])
     
+    data_handler.webhook_url = data.get("webhook_url")
     data_handler.playlist_url = data.get("playlist_url")
     data_handler.update_frequency = int(data.get("update_frequency", 0))
     
