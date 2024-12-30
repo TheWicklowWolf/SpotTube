@@ -20,6 +20,8 @@ services:
       - PGID=1000
       - spotify_client_id=abc
       - spotify_client_secret=123
+      - playlist_url="THE PLAYLIST URL YOU WANT TO SYNC"
+      - update_frequency=0 # how often does it check in hours - 0 = off 1,2,3... 
       - thread_limit=1
       - artist_track_selection=all
     volumes:

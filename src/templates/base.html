@@ -25,10 +25,18 @@
 </head>
 
 <body class="bg-secondary-subtle">
+  <div id="toast-container"></div>
   <div class="container-fluid bg-dark">
     <div class="top-bar d-flex justify-content-between align-items-center">
       <img id="logo" src="{{url_for('static',filename='spottube.png')}}">
       <h1 class="title text-center text-light flex-grow-1">SpotTube</h1>
+
+      <button class="btn btn-link text-light" id="sync-button">
+        <i class="fa fa-sync fa-2x"></i>
+        <span id="sync-spinner" class="spinner-border spinner-border-sm ms-0" role="status"
+          style="display: none;"></span>
+      </button>
+
       <button class="btn btn-link text-light" id="settings-button" data-bs-toggle="modal"
         data-bs-target="#config-modal">
         <i class="fa fa-gear fa-2x"></i>
@@ -62,6 +70,14 @@
           <div class="form-group-modal">
             <label for="sleep_interval">Sleep Interval (Seconds):</label>
             <input type="number" class="form-control" id="sleep_interval" placeholder="Enter Sleep Interval">
+          </div>
+          <div class="form-group-modal">
+            <label for="playlist_url" class="form-label">Monitored Playlist URL</label>
+            <input type="text" class="form-control" id="playlist_url" placeholder="Enter Playlist URL">
+          </div>
+          <div class="form-group-modal">
+            <label for="update_frequency" class="form-label">Check Update Frequency (in hours)</label>
+            <input type="number" class="form-control" id="update_frequency" placeholder="Enter Frequency" min="1">
           </div>
         </div>
         <div class="modal-footer">

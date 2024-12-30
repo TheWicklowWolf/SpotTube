@@ -25,6 +25,51 @@ body {
     margin-left: 10px;
 }
 
+#toast-container {
+    position: absolute;
+    top: 40px;
+    right: 30px;
+    z-index: 9999;
+}
+
+.toastItem {
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    color: white;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    opacity: 0;
+    animation: fadeInOut 3s forwards;
+}
+
+.toastItem.success {
+    background-color: #4CAF50; /* Green */
+}
+
+.toastItem.error {
+    background-color: #f44336; /* Red */
+}
+
+/* Fade in and fade out animation */
+@keyframes fadeInOut {
+    0% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    10% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+}
+
 ::-webkit-scrollbar {
     width: 12px;
 }

@@ -7,3 +7,5 @@ ytmusicapi
 yt_dlp[default]==2024.12.23
 spotipy
 thefuzz
+apscheduler
+python-dotenv

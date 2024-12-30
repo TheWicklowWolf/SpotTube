@@ -12,12 +12,21 @@ from flask import Flask, render_template
 from flask_socketio import SocketIO
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.interval import IntervalTrigger
+import time
+from dotenv import load_dotenv
 
+# Initialize the global scheduler
+scheduler = BackgroundScheduler()
 
 class DataHandler:
     def __init__(self):
-        logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(message)s", datefmt="%d/%m/%Y %H:%M:%S", handlers=[logging.StreamHandler(sys.stdout)])
+        logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s", datefmt="%d/%m/%Y %H:%M:%S", handlers=[logging.StreamHandler(sys.stdout)])
         self.logger = logging.getLogger()
+        
+        # Load environment variables from .env file
+        load_dotenv()
 
         app_name_text = os.path.basename(__file__).replace(".py", "")
         release_version = os.environ.get("RELEASE_VERSION", "unknown")
@@ -27,6 +36,10 @@ class DataHandler:
 
         self.spotify_client_id = os.environ.get("spotify_client_id", "abc")
         self.spotify_client_secret = os.environ.get("spotify_client_secret", "123")
+        
+        self.playlist_url = os.environ.get("playlist_url", "")
+        self.update_frequency = int(os.environ.get("update_frequency", 0))
+        
         self.thread_limit = int(os.environ.get("thread_limit", "1"))
         self.artist_track_selection = os.environ.get("artist_track_selection", "all")
         self.sleep_interval = 0
@@ -39,6 +52,7 @@ class DataHandler:
         full_cookies_path = os.path.join(self.config_folder, "cookies.txt")
         self.cookies_path = full_cookies_path if os.path.exists(full_cookies_path) else None
         self.reset()
+        self.handle_scheduler()
 
     def reset(self):
         self.download_list = []
@@ -181,6 +195,7 @@ class DataHandler:
             self.ytmusic = YTMusic()
             artist = song["Artist"]
             title = song["Title"]
+            track_id = song.get("TrackId")
             cleaned_artist = self.string_cleaner(artist).lower()
             cleaned_title = self.string_cleaner(title).lower()
             folder = song["Folder"]
@@ -226,7 +241,7 @@ class DataHandler:
         else:
             if found_link:
                 song["Status"] = "Link Found"
-                file_name = os.path.join(self.string_cleaner(folder), self.string_cleaner(title) + " - " + self.string_cleaner(artist))
+                file_name = os.path.join(self.string_cleaner(folder), self.string_cleaner(title) + " - " + self.string_cleaner(artist) + " - " + self.string_cleaner(track_id))
                 full_file_path = os.path.join(self.download_folder, f"{file_name}.mp3")
 
                 if os.path.exists(full_file_path):
@@ -339,12 +354,135 @@ class DataHandler:
         cleaned_string = temp_string.strip()
         return cleaned_string
 
+    def handle_scheduler(self):
+        if self.update_frequency in [None, 0]:
+            scheduler.remove_all_jobs()
+            if scheduler.running:
+                scheduler.shutdown()
+            self.logger.info("Scheduler stopped.")
+        else:
+            scheduler.remove_all_jobs()
+            scheduler.add_job(self.monitor_playlist, IntervalTrigger(minutes=int(self.update_frequency)))
+            if not scheduler.running:
+                scheduler.start()
+            self.logger.info(f"Scheduler started with a new frequency of {self.update_frequency} hours.")
+    
+    def extract_track_id_from_filename(self, filename):
+        try:
+            base_filename = filename.replace(".mp3", "")
+            parts = base_filename.split("-")
+            track_id = parts[-1]
+            
+            return track_id.strip()
+        except Exception as e:
+            self.logger.error(f"Error extracting track ID from filename {filename}: {str(e)}")
+            return None
+        
+    def get_track_info_from_spotify(self, track_id,sp):
+        try:
+            track_info = sp.track(track_id)
+            return {
+                "Artist": ", ".join([artist["name"] for artist in track_info["artists"]]),
+                "Title": track_info["name"]
+            }
+        except Exception as e:
+            self.logger.error(f"Error fetching track info for track ID {track_id}: {str(e)}")
+            return None
+    
+    def monitor_playlist(self):
+        try:
+            sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=self.spotify_client_id, client_secret=self.spotify_client_secret))
+            
+            playlist_url = self.playlist_url
+            
+            if not playlist_url:
+                self.logger.info("No playlist url provided.")
+                ret = {"Status": "Error", "Data": "No sync playlist URL provided in Settings."}
+                return
+            
+            playlist = sp.playlist(playlist_url)
+            
+            playlist_name = playlist["name"]
+            total_tracks_in_playlist = playlist["tracks"]["total"]
+            
+            # Get the list of files in the downloaded folder
+            playlist_folder = os.path.join(self.download_folder, playlist_name)
+            
+            if not os.path.exists(playlist_folder):
+                os.makedirs(playlist_folder)
+                
+            downloaded_files = os.listdir(playlist_folder)
+            downloaded_track_ids = set()
+            
+            # Extract the track IDs from the downloaded files
+            for file in downloaded_files:
+                if file.endswith(".mp3"):
+                    track_id_from_file = self.extract_track_id_from_filename(file)
+                    if track_id_from_file:
+                        downloaded_track_ids.add(track_id_from_file)
+
+            total_downloaded_files = len(downloaded_track_ids)
+            
+            # Check if the total number of tracks in the playlist matches the number of downloaded files
+            if total_tracks_in_playlist == total_downloaded_files:
+                self.logger.info("All tracks are already downloaded. Skipping download.")
+                ret = {"Status": "Success", "Data": "All tracks are already downloaded."}
+                return
+            
+            # Get all the track IDs from the playlist
+            track_ids_in_playlist = set()
+            for item in playlist["tracks"]["items"]:
+                track_id = item["track"]["id"]
+                track_ids_in_playlist.add(track_id)
+
+            # Compare the track IDs from the playlist with the downloaded files
+            missing_tracks = track_ids_in_playlist - downloaded_track_ids
+            if missing_tracks:
+                self.logger.info(f"Found {len(missing_tracks)} missing tracks in the playlist.")
+                
+                track_list = []
+                
+                # Fetch missing tracks and add to the download queue
+                for missing_track_id in missing_tracks:
+                    track_info = self.get_track_info_from_spotify(missing_track_id, sp)
+                    
+                    if track_info:
+                        song = {
+                            "Artist": track_info["Artist"],
+                            "Title": track_info["Title"],
+                            "Status": "Queued",
+                            "Folder": playlist_name,
+                            "TrackId": missing_track_id
+                        }
+                        track_list.append(song)
+                        self.logger.info(f"Added missing track to download queue: {song['Title']}")
+                
+                self.download_list.extend(track_list)
+                if self.status != "Running":
+                    self.index = 0
+                    self.status = "Running"
+                    thread = threading.Thread(target=self.master_queue)
+                    thread.daemon = True
+                    thread.start()
+                ret = {"Status": "Success", "Data": f"Added {len(track_list)} missing tracks to the download queue."}
+            else:
+                self.logger.info("All tracks from the playlist are already downloaded.")
+                ret = {"Status": "Success", "Data": "All tracks from the playlist are already downloaded."}
+
+        except Exception as e:
+            self.logger.error(f"Error in monitor_playlist: {str(e)}")
+            ret = {"Status": "Error", "Data": str(e)}
+        finally:
+            return ret
+
 
 app = Flask(__name__)
 app.secret_key = "secret_key"
 socketio = SocketIO(app)
 
 data_handler = DataHandler()
+
+scheduler = BackgroundScheduler();
 
 
 @app.route("/")
@@ -384,7 +522,10 @@ def download(data):
     finally:
         socketio.emit("download", ret)
 
-
+@socketio.on("sync")
+def sync():
+    ret=data_handler.monitor_playlist();
+    socketio.emit("sync", ret)
 @socketio.on("connect")
 def connection():
     if data_handler.monitor_active_flag == False:
@@ -401,6 +542,8 @@ def loadSettings():
         "spotify_client_id": data_handler.spotify_client_id,
         "spotify_client_secret": data_handler.spotify_client_secret,
         "sleep_interval": data_handler.sleep_interval,
+        "playlist_url": data_handler.playlist_url,
+        "update_frequency": data_handler.update_frequency,
     }
     socketio.emit("settingsLoaded", data)
 
@@ -410,6 +553,12 @@ def updateSettings(data):
     data_handler.spotify_client_id = data["spotify_client_id"]
     data_handler.spotify_client_secret = data["spotify_client_secret"]
     data_handler.sleep_interval = int(data["sleep_interval"])
+    
+    data_handler.playlist_url = data.get("playlist_url")
+    data_handler.update_frequency = int(data.get("update_frequency", 0))
+    
+    # Update the scheduler's interval
+    data_handler.handle_scheduler()
 
 
 @socketio.on("disconnect")

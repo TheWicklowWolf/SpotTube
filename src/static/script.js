@@ -7,6 +7,10 @@ var save_message = document.getElementById("save-message");
 var save_changes_button = document.getElementById("save-changes-button");
 var spotify_client_id = document.getElementById("spotify_client_id");
 var spotify_client_secret = document.getElementById("spotify_client_secret");
+var playlist_url = document.getElementById("playlist_url");
+var update_frequency = document.getElementById("update_frequency");
+var sync_button = document.getElementById('sync-button');
+var sync_spinner = document.getElementById('sync-spinner');
 var sleep_interval = document.getElementById("sleep_interval");
 var progress_bar = document.getElementById('progress-status-bar');
 var progress_table = document.getElementById('progress-table').getElementsByTagName('tbody')[0];
@@ -38,9 +42,28 @@ function updateProgressBar(percentage, status) {
     progress_bar.classList.add("progress-bar-striped");
 }
 
+function showToast(message, type) {
+    const toastContainer = document.getElementById("toast-container");
+    
+    const toast = document.createElement("div");
+    toast.classList.add("toastItem", type);
+    toast.textContent = message;
+    
+    toastContainer.appendChild(toast);
+
+    setTimeout(() => {
+        toast.remove();
+    }, 15000);
+}
+
 download_button.addEventListener('click', function () {
     socket.emit("download", { "Link": search_box.value });
     download_spinner.style.display = 'inline-block';
+});
+
+sync_button.addEventListener('click', function () {
+    socket.emit("sync");
+    sync_spinner.style.display = 'inline-block';
 });
 
 search_box.addEventListener('keydown', function (event) {
@@ -63,6 +86,15 @@ socket.on("download", (response) => {
     download_spinner.style.display = 'none';
 });
 
+socket.on("sync", (response) => {
+    if (response.Status == 'Success') {
+        showToast(response.Data, 'success');
+    } else {
+        showToast(response.Data, 'error');
+    }
+    sync_spinner.style.display = 'none';
+});
+
 clear_button.addEventListener('click', function () {
     socket.emit("clear");
 });
@@ -74,6 +106,8 @@ config_modal.addEventListener('show.bs.modal', function (event) {
         spotify_client_id.value = settings.spotify_client_id;
         spotify_client_secret.value = settings.spotify_client_secret;
         sleep_interval.value = settings.sleep_interval;
+        playlist_url.value = settings.playlist_url;
+        update_frequency.value = settings.update_frequency;
         socket.off("settingsLoaded", handleSettingsLoaded);
     }
     socket.on("settingsLoaded", handleSettingsLoaded);
@@ -84,6 +118,8 @@ save_changes_button.addEventListener("click", () => {
         "spotify_client_id": spotify_client_id.value,
         "spotify_client_secret": spotify_client_secret.value,
         "sleep_interval": sleep_interval.value,
+        "playlist_url": playlist_url.value,
+        "update_frequency": parseInt(update_frequency.value),
     });
     save_message.style.display = "block";
     setTimeout(function () {
