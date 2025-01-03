@@ -1,0 +1,10 @@
+gunicorn
+gevent
+gevent-websocket
+flask
+flask_socketio
+ytmusicapi
+yt_dlp
+spotipy
+spotipy_anon
+thefuzz
