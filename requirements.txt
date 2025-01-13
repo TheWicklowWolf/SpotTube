@@ -4,7 +4,7 @@ gevent-websocket
 flask
 flask_socketio
 ytmusicapi
-yt_dlp[default]==2024.12.23
+yt_dlp[default]==2025.1.12
 spotipy
 spotipy_anon
 thefuzz
