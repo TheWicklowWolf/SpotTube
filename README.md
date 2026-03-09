@@ -7,6 +7,8 @@
 
 SpotTube is a tool for downloading Spotify Artists/Albums/Tracks/Playlists via yt-dlp.
 
+See: https://developer.spotify.com/blog/2026-02-06-update-on-developer-access-and-platform-security
+
 
 ## Run using docker-compose
 
@@ -63,6 +65,7 @@ To utilize a cookies file with yt-dlp, follow these steps:
 
 
 ---
+
 
 
 https://hub.docker.com/r/thewicklowwolf/spottube
